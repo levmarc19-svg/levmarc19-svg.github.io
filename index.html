@@ -1182,10 +1182,18 @@
         ctx.stroke();
 
         // Projectile dot
-        ctx.beginPath();
-        ctx.arc(pos.px, pos.py, 5, 0, Math.PI * 2);
-        ctx.fillStyle = flippedParabola ? "#0cf" : "#88aaff";
-        ctx.fill();
+var visible =
+  pos.px >= 0 &&
+  pos.px <= CANVAS_WIDTH &&
+  pos.py >= 0 &&
+  pos.py <= CANVAS_HEIGHT;
+
+if (visible) {
+  ctx.beginPath();
+  ctx.arc(pos.px, pos.py, 5, 0, Math.PI * 2);
+  ctx.fillStyle = flippedParabola ? "#0cf" : "#88aaff";
+  ctx.fill();
+}
 
         // Wall collision check
         if (isBlockedByWall(worldX, worldY)) {
@@ -1200,11 +1208,16 @@
 
         t += 0.05;
 
-        if (worldX > 0 && worldX < GRID_COLS && worldY > 0 && worldY < GRID_ROWS) {
-          requestAnimationFrame(step);
-        } else {
-          finishShot(path, false, pos.px, pos.py, "oob");
-        }
+  var stillAlive =
+    worldX < GRID_COLS + 5 &&
+    worldY > -10 &&
+    t < 30;
+
+  if (stillAlive) {
+    requestAnimationFrame(step);
+  } else {
+    finishShot(path, false, pos.px, pos.py, "oob");
+  }
       }
 
       step();
