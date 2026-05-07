@@ -216,7 +216,7 @@
     .mod-badge.flip-badge  { background: rgba(0,200,255,0.15); color: #0cf;   border: 1px solid #0cf; }
     .mod-badge.laser-badge { background: rgba(255,255,0,0.15);  color: yellow; border: 1px solid yellow; }
 
-    /* Hint button — below back button */
+    /* Hint button */
     #hint-btn {
       position: absolute; top: 60px; left: 28px; z-index: 10;
       font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 3px;
@@ -283,16 +283,20 @@
     #game-controls button:hover           { background: var(--red); border-color: var(--red); }
     #game-controls button.shoot-btn       { background: var(--red); border-color: var(--red); }
     #game-controls button.shoot-btn:hover { background: #ff3a3a; }
-    /* Laser activate button (yellow outline, not yet armed) */
     #game-controls button.laser-btn {
       background: rgba(255,220,0,0.12); border-color: gold; color: gold;
     }
     #game-controls button.laser-btn:hover { background: rgba(255,220,0,0.28); }
-    /* Laser cancel button (dim red) */
     #game-controls button.laser-cancel-btn {
       background: rgba(255,60,60,0.15); border-color: #f44; color: #f44;
     }
     #game-controls button.laser-cancel-btn:hover { background: rgba(255,60,60,0.3); }
+
+    /* Auto-b display in laser mode */
+    #game-controls .laser-b-auto {
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px;
+      letter-spacing: 2px; color: #ffe44d; min-width: 72px;
+    }
 
     #dot-preview {
       display: flex; flex-direction: column;
@@ -558,19 +562,12 @@
     }
 
     // ── MODIFIERS ────────────────────────────────────────────────
-    // Walls: level 7+, 25% chance, only when NOT flipped.
-    // Flip:  level 10+, 20% chance, only when NO walls.
-    // These are rolled ONCE per level in rollModifiers() and stored as booleans.
-    // buildWalls() simply reads hasWalls — it does NOT re-roll.
-
     var hasWalls       = false;
     var flippedParabola = false;
     var walls          = [];
 
     function rollModifiers(lvl) {
-      // Walls first — available from level 7
       hasWalls = (lvl >= 7) && (Math.random() < 0.25);
-      // Flip only if no walls — available from level 10
       flippedParabola = !hasWalls && (lvl >= 10) && (Math.random() < 0.20);
     }
 
@@ -588,7 +585,6 @@
           attempts++;
         } while (isWallAt(wallCol) && attempts < 20);
         if (isWallAt(wallCol)) { continue; }
-        // Wall top: row 2–5 so it's always lower than the grid top
         walls.push({ gridX: wallCol, topGridY: 2 + Math.floor(Math.random() * 4) });
       }
     }
@@ -607,12 +603,9 @@
     }
 
     // ── LASER ────────────────────────────────────────────────────
-    // laserCharges = stockpile of laser shots the player has earned
-    // laserArmed   = true while the player has activated laser mode for this shot
     var laserCharges = 0;
     var laserArmed   = false;
 
-    // Award a laser charge every 5 levels
     function checkLaserReward() {
       if (level % 5 === 0) {
         laserCharges++;
@@ -620,15 +613,13 @@
       }
     }
 
-    // Toggle laser mode on
     function activateLaser() {
       if (laserCharges <= 0 || isShooting) { return; }
       laserArmed = true;
       renderControls();
-      setMessage("⚡ Laser armed — enter m and b, then shoot. Click Cancel to disarm.");
+      setMessage("⚡ Laser armed — enter slope m. Line always starts from your dot.");
     }
 
-    // Toggle laser mode off (without spending a charge)
     function cancelLaser() {
       laserArmed = false;
       renderControls();
@@ -650,7 +641,7 @@
       }
     }
 
-    // ── DOT PREVIEW HTML (mini legend in controls bar) ───────────
+    // ── DOT PREVIEW ──────────────────────────────────────────────
     function dotPreviewHTML() {
       return (
         "<div id='dot-preview'>" +
@@ -667,9 +658,6 @@
       var bar   = document.getElementById("game-controls");
       var badge = document.getElementById("form-badge");
 
-      // Build laser toggle buttons
-      // If laser is armed: show "Cancel" button instead of "Activate"
-      // If charges remain and laser not yet armed: show "Activate" button
       var laserToggleBtn = "";
       if (laserArmed) {
         laserToggleBtn = "<button class='laser-cancel-btn' onclick='cancelLaser()'>✕ Cancel Laser</button>";
@@ -678,21 +666,41 @@
       }
 
       // ── LASER MODE ───────────────────────────────────────────
-      // y = m * (x - playerX) + playerY + b_offset
-      // where b_offset is an extra vertical shift the player enters.
-      // This ensures the shot ALWAYS originates from the player dot.
+      // The laser always passes through (playerX, playerY).
+      // Standard form: y = m*(x - playerX) + playerY
+      // which equals:  y = m*x + (playerY - m*playerX)
+      // Player only needs to enter m; b is computed automatically.
       if (laserArmed) {
-        badge.textContent = "⚡ Laser — Linear Form";
+        badge.textContent = "⚡ Laser — Linear (through your dot)";
         badge.style.background = "#cc9900"; badge.style.color = "#000";
         bar.innerHTML =
           dotPreviewHTML() +
-          "<span class='label'>y =</span>" +
-          "<input id='inputM' placeholder='m'>" +
-          "<span class='label'>x +</span>" +
-          "<input id='inputLB' placeholder='b'>" +
-          "<span class='label' style='font-size:11px;color:rgba(255,255,255,0.35);'>(line through grid)</span>" +
+          "<span class='label'>slope m =</span>" +
+          "<input id='inputM' placeholder='m' style='width:60px'>" +
+          "<span class='label' style='font-size:13px;color:rgba(255,255,255,0.45);'>" +
+            "→ y = m(x−" + playerX + ")+" + playerY +
+          "</span>" +
           laserToggleBtn +
           "<button class='shoot-btn' onclick='shoot()'>Fire!</button>";
+
+        // Live preview of b value in the formula display
+        setTimeout(function() {
+          var mInput = document.getElementById("inputM");
+          if (!mInput) { return; }
+          mInput.addEventListener("input", function() {
+            var m = parseFloat(mInput.value);
+            var labelEl = bar.querySelector(".label[style]");
+            if (!labelEl) { return; }
+            if (!isNaN(m)) {
+              var b = playerY - m * playerX;
+              labelEl.textContent = "→ y = " + m + "x + " + b.toFixed(2) + "  (passes through dot ✓)";
+              labelEl.style.color = "#ffe44d";
+            } else {
+              labelEl.textContent = "→ y = m(x−" + playerX + ")+" + playerY;
+              labelEl.style.color = "rgba(255,255,255,0.45)";
+            }
+          });
+        }, 0);
         return;
       }
 
@@ -742,10 +750,11 @@
     // ── READ INPUTS ──────────────────────────────────────────────
     function readInputs() {
       if (laserArmed) {
-        var m   = parseFloat(document.getElementById("inputM").value);
-        var bLn = parseFloat(document.getElementById("inputLB").value);
-        if (isNaN(m) || isNaN(bLn)) { setMessage("Enter m and b for the laser."); return null; }
-        return { isLaser: true, m: m, bLin: bLn };
+        var m = parseFloat(document.getElementById("inputM").value);
+        if (isNaN(m)) { setMessage("Enter a slope m for the laser."); return null; }
+        // Compute b so line always passes through (playerX, playerY)
+        var bAuto = playerY - m * playerX;
+        return { isLaser: true, m: m, bAuto: bAuto };
       }
 
       if (currentForm === "general") {
@@ -902,15 +911,29 @@
 
       drawWalls();
 
-      // Past shots
-      ctx.strokeStyle = "rgba(120,160,255,0.18)"; ctx.lineWidth = 2;
+      // Past shots — brighter and thicker
       for (var s = 0; s < pastShots.length; s++) {
-        var shot = pastShots[s]; ctx.beginPath();
-        for (var p = 0; p < shot.length; p++) {
-          if (p === 0) { ctx.moveTo(shot[p].px, shot[p].py); }
-          else         { ctx.lineTo(shot[p].px, shot[p].py); }
+        var shot = pastShots[s];
+        if (shot.length < 2) { continue; }
+        var isLaserShot = shot.isLaser || false;
+
+        ctx.save();
+        if (isLaserShot) {
+          ctx.strokeStyle = "rgba(255,230,0,0.45)";
+          ctx.lineWidth   = 2.5;
+          ctx.shadowColor = "rgba(255,220,0,0.5)";
+          ctx.shadowBlur  = 6;
+        } else {
+          ctx.strokeStyle = "rgba(160,210,255,0.55)";
+          ctx.lineWidth   = 2.5;
+          ctx.shadowColor = "rgba(100,180,255,0.6)";
+          ctx.shadowBlur  = 8;
         }
+        ctx.beginPath();
+        ctx.moveTo(shot[0].px, shot[0].py);
+        for (var p = 1; p < shot.length; p++) { ctx.lineTo(shot[p].px, shot[p].py); }
         ctx.stroke();
+        ctx.restore();
       }
 
       // Player dot + barrel
@@ -945,11 +968,10 @@
       setMessage("");
 
       if (inputs.isLaser) {
-        // Consume one charge now that the shot is confirmed
         laserCharges--;
         laserArmed = false;
         updateModifierBadges();
-        shootLaser(inputs.m, inputs.bLin);
+        shootLaser(inputs.m, inputs.bAuto);
         return;
       }
 
@@ -964,7 +986,7 @@
         var pos    = gridToPixel(worldX, worldY);
 
         if (worldX > enemyX + 1 || worldY < 0) {
-          trackerPos = null; finishShot(path, false, pos.px, pos.py, "oob"); return;
+          trackerPos = null; finishShot(path, false, pos.px, pos.py, "oob", false); return;
         }
 
         trackerPos = { px: pos.px, py: pos.py, worldX: worldX, worldY: worldY };
@@ -975,20 +997,39 @@
         draw();
 
         if (onScreen && path.length > 0) {
+          // Glow layer
+          ctx.save();
           ctx.beginPath();
-          ctx.strokeStyle = flippedParabola ? "rgba(0,220,255,0.8)" : "rgba(255,255,255,0.75)";
-          ctx.lineWidth = 2;
+          ctx.strokeStyle = flippedParabola ? "rgba(0,220,255,0.35)" : "rgba(100,180,255,0.35)";
+          ctx.lineWidth = 6;
+          ctx.shadowColor = flippedParabola ? "#0cf" : "#88aaff";
+          ctx.shadowBlur = 14;
           for (var i = 0; i < path.length; i++) {
             if (i === 0) { ctx.moveTo(path[i].px, path[i].py); }
             else         { ctx.lineTo(path[i].px, path[i].py); }
           }
           ctx.stroke();
+          ctx.restore();
+
+          // Bright core line
+          ctx.save();
+          ctx.beginPath();
+          ctx.strokeStyle = flippedParabola ? "rgba(0,240,255,0.95)" : "rgba(200,230,255,0.95)";
+          ctx.lineWidth = 2.5;
+          for (var i = 0; i < path.length; i++) {
+            if (i === 0) { ctx.moveTo(path[i].px, path[i].py); }
+            else         { ctx.lineTo(path[i].px, path[i].py); }
+          }
+          ctx.stroke();
+          ctx.restore();
+
+          // Bullet dot
           ctx.beginPath(); ctx.arc(pos.px, pos.py, 5, 0, Math.PI*2);
-          ctx.fillStyle = flippedParabola ? "#0cf" : "#88aaff"; ctx.fill();
+          ctx.fillStyle = flippedParabola ? "#0ff" : "#cce8ff"; ctx.fill();
         }
 
-        if (isBlockedByWall(worldX, worldY)) { trackerPos = null; finishShot(path, false, pos.px, pos.py, "wall"); return; }
-        if (isNearEnemy(pos.px, pos.py))      { trackerPos = null; finishShot(path, true,  pos.px, pos.py, "hit");  return; }
+        if (isBlockedByWall(worldX, worldY)) { trackerPos = null; finishShot(path, false, pos.px, pos.py, "wall", false); return; }
+        if (isNearEnemy(pos.px, pos.py))      { trackerPos = null; finishShot(path, true,  pos.px, pos.py, "hit",  false); return; }
 
         t += 0.05;
         requestAnimationFrame(step);
@@ -998,24 +1039,22 @@
     }
 
     // ── LASER SHOT ───────────────────────────────────────────────
-    // The laser equation is y = m*(worldX - playerX) + playerY + bLin
-    // so at t=0 (worldX=playerX) the shot is exactly at (playerX, playerY+bLin).
-    // bLin is an optional vertical offset above/below the player dot.
-    // We update lastAB.b = m so the barrel points in the correct direction.
-    function shootLaser(m, bLin) {
-      // Barrel angle: slope m in grid space (positive m = upward right in grid)
-      lastAB = { a: 0, b: m };
+    // bAuto = playerY - m * playerX, so y = m*worldX + bAuto
+    // At worldX = playerX: y = m*playerX + (playerY - m*playerX) = playerY ✓
+    function shootLaser(m, bAuto) {
+      lastAB = { a: 0, b: m };  // barrel points at slope m
 
       var path = [], t = 0;
+      path.isLaser = true;  // tag for past-shot rendering
 
       function stepLaser() {
         var worldX = playerX + t;
-        // Shot starts from (playerX, playerY + bLin) and rises/falls at slope m
-        var worldY = m * t + playerY + bLin;
+        // y = m * worldX + bAuto  (always passes through player dot)
+        var worldY = m * worldX + bAuto;
         var pos    = gridToPixel(worldX, worldY);
 
         if (worldX > enemyX + 1 || worldY < 0) {
-          trackerPos = null; finishShot(path, false, pos.px, pos.py, "oob"); return;
+          trackerPos = null; finishShot(path, false, pos.px, pos.py, "oob", true); return;
         }
 
         trackerPos = { px: pos.px, py: pos.py, worldX: worldX, worldY: worldY };
@@ -1026,20 +1065,38 @@
         draw();
 
         if (onScreen && path.length > 0) {
+          // Glow
+          ctx.save();
           ctx.beginPath();
-          ctx.strokeStyle = "rgba(255,240,0,0.9)"; ctx.lineWidth = 3;
-          ctx.shadowColor = "yellow"; ctx.shadowBlur = 10;
+          ctx.strokeStyle = "rgba(255,240,0,0.35)";
+          ctx.lineWidth = 8;
+          ctx.shadowColor = "yellow";
+          ctx.shadowBlur = 20;
           for (var i = 0; i < path.length; i++) {
             if (i === 0) { ctx.moveTo(path[i].px, path[i].py); }
             else         { ctx.lineTo(path[i].px, path[i].py); }
           }
-          ctx.stroke(); ctx.shadowBlur = 0;
+          ctx.stroke();
+          ctx.restore();
+
+          // Bright core
+          ctx.save();
+          ctx.beginPath();
+          ctx.strokeStyle = "rgba(255,248,180,0.98)";
+          ctx.lineWidth = 3;
+          for (var i = 0; i < path.length; i++) {
+            if (i === 0) { ctx.moveTo(path[i].px, path[i].py); }
+            else         { ctx.lineTo(path[i].px, path[i].py); }
+          }
+          ctx.stroke();
+          ctx.restore();
+
           ctx.beginPath(); ctx.arc(pos.px, pos.py, 4, 0, Math.PI*2);
           ctx.fillStyle = "white"; ctx.fill();
         }
 
-        if (isBlockedByWall(worldX, worldY)) { trackerPos = null; finishShot(path, false, pos.px, pos.py, "wall"); return; }
-        if (isNearEnemy(pos.px, pos.py))      { trackerPos = null; finishShot(path, true,  pos.px, pos.py, "hit");  return; }
+        if (isBlockedByWall(worldX, worldY)) { trackerPos = null; finishShot(path, false, pos.px, pos.py, "wall", true); return; }
+        if (isNearEnemy(pos.px, pos.py))      { trackerPos = null; finishShot(path, true,  pos.px, pos.py, "hit",  true); return; }
 
         t += 0.05;
         requestAnimationFrame(stepLaser);
@@ -1055,10 +1112,11 @@
       return Math.sqrt(dx*dx + dy*dy) < 14;
     }
 
-    function finishShot(path, didHit, hitPx, hitPy, reason) {
+    function finishShot(path, didHit, hitPx, hitPy, reason, isLaser) {
       isShooting = false;
-      laserArmed = false;    // reset armed state regardless
+      laserArmed = false;
       trackerPos = null;
+      if (isLaser) { path.isLaser = true; }
       pastShots.push(path);
       if (pastShots.length > 20) { pastShots.shift(); }
       shotsLeft--;
@@ -1069,7 +1127,7 @@
         spawnExplosion(hitPx, hitPy);
         animateExplosion(function() {
           level++;
-          checkLaserReward();    // award charge every 5 levels
+          checkLaserReward();
           shotsLeft = 5; pastShots = []; particles = []; lastAB = null;
           startLevel();
         });
@@ -1097,11 +1155,10 @@
 
     // ── START LEVEL ───────────────────────────────────────────────
     function startLevel() {
-      // Roll modifiers ONCE — stored in hasWalls and flippedParabola
       rollModifiers(level);
       pickForm(level);
       placeDots();
-      buildWalls();    // reads hasWalls, never re-rolls
+      buildWalls();
 
       laserArmed = false;
       lastAB     = null;
