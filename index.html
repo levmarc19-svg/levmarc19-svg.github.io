@@ -23,6 +23,18 @@
       font-family: 'Rajdhani', sans-serif;
       overflow: hidden;
       color: var(--white);
+      /* Hide the default cursor everywhere */
+      cursor: none;
+    }
+
+    /* ── CUSTOM CURSOR ──────────────────────────────────────── */
+    #custom-cursor {
+      position: fixed;
+      top: 0; left: 0;
+      width: 20px; height: 20px;
+      pointer-events: none;
+      z-index: 99999;
+      transform: translate(-50%, -50%);
     }
 
     /* ── SHARED GRID BACKGROUND ─────────────────────────────── */
@@ -94,7 +106,7 @@
       padding: 13px 60px;
       min-width: 280px;
       text-align: center;
-      cursor: pointer;
+      cursor: none;
       position: relative;
       overflow: hidden;
       transition: border-color 0.2s;
@@ -118,7 +130,7 @@
 
     .btn.disabled {
       opacity: 0.4;
-      cursor: not-allowed;
+      cursor: none;
       border-color: rgba(255,255,255,0.1);
     }
     .btn.disabled::before { display: none; }
@@ -144,7 +156,7 @@
       color: var(--grey);
       background: none;
       border: none;
-      cursor: pointer;
+      cursor: none;
       transition: color 0.2s;
       z-index: 10;
     }
@@ -156,7 +168,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 8px;
       position: relative;
       z-index: 2;
     }
@@ -180,10 +192,25 @@
       width: 200px;
       outline: none;
       transition: border-color 0.2s;
+      cursor: none;
     }
 
     .username-row input::placeholder { color: rgba(255,255,255,0.2); }
     .username-row input:focus        { border-color: var(--red); }
+
+    /* Username error message */
+    #username-error {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--red);
+      text-transform: uppercase;
+      min-height: 18px;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 2;
+    }
 
     /* ── HIGH SCORE ─────────────────────────────────────────── */
     #highscore-display {
@@ -290,7 +317,6 @@
       color: var(--white);
     }
 
-    /* Form badge — shows which equation form this level uses */
     #form-badge {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 13px;
@@ -319,7 +345,6 @@
       white-space: nowrap;
     }
 
-    /* Static label text inside the controls bar */
     #game-controls .label {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 20px;
@@ -327,7 +352,6 @@
       color: var(--white);
     }
 
-    /* Fixed parts of the formula shown in grey */
     #game-controls .fixed {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 20px;
@@ -348,6 +372,7 @@
       outline: none;
       text-align: center;
       transition: border-color 0.2s;
+      cursor: none;
     }
 
     #game-controls input:focus { border-color: var(--red); }
@@ -357,7 +382,7 @@
       font-size: 18px;
       letter-spacing: 3px;
       padding: 6px 20px;
-      cursor: pointer;
+      cursor: none;
       border: 1px solid rgba(255,255,255,0.25);
       background: rgba(255,255,255,0.07);
       color: var(--white);
@@ -387,23 +412,30 @@
 </head>
 <body>
 
+  <!-- ── CUSTOM CURSOR SVG ──────────────────────────────────── -->
+  <!-- A red crosshair that follows the mouse -->
+  <svg id="custom-cursor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+    <!-- outer ring -->
+    <circle cx="10" cy="10" r="8" fill="none" stroke="#e02020" stroke-width="1.5" opacity="0.85"/>
+    <!-- crosshair lines -->
+    <line x1="10" y1="1"  x2="10" y2="6"  stroke="#e02020" stroke-width="1.5" opacity="0.85"/>
+    <line x1="10" y1="14" x2="10" y2="19" stroke="#e02020" stroke-width="1.5" opacity="0.85"/>
+    <line x1="1"  y1="10" x2="6"  y2="10" stroke="#e02020" stroke-width="1.5" opacity="0.85"/>
+    <line x1="14" y1="10" x2="19" y2="10" stroke="#e02020" stroke-width="1.5" opacity="0.85"/>
+    <!-- centre dot -->
+    <circle cx="10" cy="10" r="1.5" fill="#e02020"/>
+  </svg>
+
+
   <!-- ============================================================
        SCREEN 1 — INTRO VIDEOS
-
-       PUT YOUR VIDEO FILE PATHS IN THE src="" ATTRIBUTES BELOW:
-         Video 1 (opening logo):   src="Opening Scene.mp4"
-         Video 2 (loading screen): src="Loading screen (1).mp4"
   ============================================================ -->
   <div id="screen-intro" class="screen active">
     <div class="grid-bg"></div>
-
-    <!-- VIDEO 1 — Opening logo. Replace src="" with your file path. -->
     <video id="video-opening" muted playsinline preload="auto"
            src="Opening Scene.mp4"
            style="position:relative;z-index:1;width:min(500px,80vw);height:min(500px,80vw);object-fit:contain;display:block;">
     </video>
-
-    <!-- VIDEO 2 — Loading screen. Replace src="" with your file path. -->
     <video id="video-loading" muted playsinline preload="auto"
            src="Loading screen (1).mp4"
            style="position:relative;z-index:1;width:min(500px,80vw);height:min(500px,80vw);object-fit:contain;display:none;">
@@ -425,13 +457,17 @@
 
       <div class="username-row">
         <label for="username-input">Player:</label>
-        <input id="username-input" type="text" placeholder="Enter username" maxlength="20">
+        <input id="username-input" type="text" placeholder="Enter username" maxlength="20"
+               onkeydown="if(event.key==='Enter') tryPlay()">
       </div>
+
+      <!-- Error shown when they try to continue without a name -->
+      <div id="username-error"></div>
 
       <div id="highscore-display"></div>
 
       <nav class="menu">
-        <button class="btn primary" onclick="goTo('screen-mode')">
+        <button class="btn primary" onclick="tryPlay()">
           <span>Play</span>
         </button>
       </nav>
@@ -473,7 +509,6 @@
 
     <button class="back-btn" onclick="returnToHome()">← Back</button>
 
-    <!-- HUD top-right: title, level/shots, form badge -->
     <div id="game-hud">
       <div id="game-title">Math Att✦que — PvE</div>
       <div id="hud"></div>
@@ -491,6 +526,18 @@
   <script>
 
     // ============================================================
+    // CUSTOM CURSOR
+    // ============================================================
+
+    var cursorEl = document.getElementById("custom-cursor");
+
+    document.addEventListener("mousemove", function(e) {
+      cursorEl.style.left = e.clientX + "px";
+      cursorEl.style.top  = e.clientY + "px";
+    });
+
+
+    // ============================================================
     // SCREEN NAVIGATION
     // ============================================================
 
@@ -505,6 +552,30 @@
     function returnToHome() {
       saveHighScore();
       goTo("screen-home");
+    }
+
+
+    // ============================================================
+    // USERNAME — must be filled before proceeding
+    // ============================================================
+
+    function tryPlay() {
+      var username = document.getElementById("username-input").value.trim();
+      var errEl    = document.getElementById("username-error");
+
+      if (username === "") {
+        errEl.textContent = "⚠ Enter a username to continue";
+        // Shake the input border red briefly
+        var inp = document.getElementById("username-input");
+        inp.style.borderBottomColor = "#e02020";
+        setTimeout(function() {
+          inp.style.borderBottomColor = "";
+        }, 1200);
+        return;
+      }
+
+      errEl.textContent = "";
+      goTo("screen-mode");
     }
 
 
@@ -591,71 +662,24 @@
 
     // ============================================================
     // EQUATION FORMS
-    //
-    // Each level picks one of three forms. The player fills in
-    // different inputs depending on the form, but internally
-    // all three get converted to the same a, b values used to
-    // animate the projectile.
-    //
-    // The three forms are:
-    //
-    //   GENERAL:  y = ax² + bx
-    //   Player enters: a, b
-    //   (c is always 0 since the shot starts at the player dot)
-    //
-    //   FACTORED: y = a(x - r)(x - s)
-    //   Player enters: r, s
-    //   a is shown (fixed, chosen by the game)
-    //   Expanding: y = a(x² - (r+s)x + rs)
-    //   So b = -a(r+s),  and the shift from playerX is handled in shoot()
-    //
-    //   VERTEX:   y = a(x - h)² + k
-    //   Player enters: h, k
-    //   a is shown (fixed, chosen by the game)
-    //   Expanding: y = a(x² - 2hx + h²) + k = ax² - 2ahx + ah² + k
-    //   So b = -2ah,  and again the shift is handled in shoot()
-    //
-    // The order of forms cycles: general → factored → vertex → general...
-    // Level 1 always starts with general.
     // ============================================================
 
-    var FORM_ORDER = ["general", "factored", "vertex"];
-
-    // The fixed value of 'a' shown to the player for factored and vertex.
-    // We pick a clean negative value so the parabola always curves down.
+    var FORM_ORDER      = ["general", "factored", "vertex"];
     var FIXED_A_OPTIONS = [-0.1, -0.15, -0.2, -0.25, -0.3];
-
-    // currentForm is set at the start of each level
     var currentForm;
-
-    // fixedA is the 'a' value shown to the player for factored/vertex
     var fixedA;
 
-
-    // ── Pick which form to use this level ───────────────────────
-    // Level 1 → index 0 (general), level 2 → index 1 (factored), etc.
     function pickForm(levelNumber) {
       var index = (levelNumber - 1) % FORM_ORDER.length;
       currentForm = FORM_ORDER[index];
-
-      // Pick a random clean 'a' value for factored and vertex forms
       fixedA = FIXED_A_OPTIONS[Math.floor(Math.random() * FIXED_A_OPTIONS.length)];
     }
 
-
-    // ── Build the controls bar HTML for the current form ────────
-    //
-    // Each form shows a different equation with blank inputs.
-    // The fixed parts (like 'a' in factored form) are shown in grey.
-    // The inputs the player fills in are white boxes.
-    //
     function renderControls() {
-      var bar = document.getElementById("game-controls");
+      var bar   = document.getElementById("game-controls");
       var badge = document.getElementById("form-badge");
 
       if (currentForm === "general") {
-
-        // y = [a]x² + [b]x
         badge.textContent = "General Form";
         bar.innerHTML =
           "<span class='label'>y =</span>" +
@@ -663,12 +687,9 @@
           "<span class='label'>x² +</span>" +
           "<input id='inputB' placeholder='b'>" +
           "<span class='label'>x</span>" +
-          "<button class='shoot-btn' onclick='shoot()'>Shoot</button>" +
-          "<button onclick='startLevel()'>Reset</button>";
+          "<button class='shoot-btn' onclick='shoot()'>Shoot</button>";
 
       } else if (currentForm === "factored") {
-
-        // y = [fixedA](x - [r])(x - [s])
         badge.textContent = "Factored Form";
         bar.innerHTML =
           "<span class='label'>y =</span>" +
@@ -678,12 +699,9 @@
           "<span class='label'>)(x −</span>" +
           "<input id='inputS' placeholder='s'>" +
           "<span class='label'>)</span>" +
-          "<button class='shoot-btn' onclick='shoot()'>Shoot</button>" +
-          "<button onclick='startLevel()'>Reset</button>";
+          "<button class='shoot-btn' onclick='shoot()'>Shoot</button>";
 
       } else if (currentForm === "vertex") {
-
-        // y = [fixedA](x - [h])² + [k]
         badge.textContent = "Vertex Form";
         bar.innerHTML =
           "<span class='label'>y =</span>" +
@@ -692,150 +710,71 @@
           "<input id='inputH' placeholder='h'>" +
           "<span class='label'>)² +</span>" +
           "<input id='inputK' placeholder='k'>" +
-          "<button class='shoot-btn' onclick='shoot()'>Shoot</button>" +
-          "<button onclick='startLevel()'>Reset</button>";
+          "<button class='shoot-btn' onclick='shoot()'>Shoot</button>";
       }
     }
 
-
-    // ── Convert the player's inputs into a and b values ─────────
-    //
-    // No matter which form the player used, we convert to:
-    //   worldY = playerY + (a * t² + b * t)
-    // where t is the horizontal distance from the player.
-    //
-    // Returns { a, b } or null if inputs are invalid.
-    //
     function readInputs() {
-
       if (currentForm === "general") {
-
         var a = parseFloat(document.getElementById("inputA").value);
         var b = parseFloat(document.getElementById("inputB").value);
-
-        if (isNaN(a) || isNaN(b))     { setMessage("Enter values for a and b."); return null; }
-        if (Math.abs(a) < 0.05)       { setMessage("a is too small. Try -0.2"); return null; }
-
-        // Force downward curve
+        if (isNaN(a) || isNaN(b))   { setMessage("Enter values for a and b."); return null; }
+        if (Math.abs(a) < 0.05)     { setMessage("a is too small. Try -0.2");  return null; }
         if (a > 0) { a = -a; }
-
         return { a: a, b: b };
 
       } else if (currentForm === "factored") {
-
-        // y = fixedA * (x - r)(x - s)
-        // Expanding relative to playerX as origin:
-        //   Let x = playerX + t
-        //   y - playerY = fixedA * (playerX + t - r)(playerX + t - s)
-        // Let u = t + (playerX - r), v = t + (playerX - s)
-        //   = fixedA * (t + (playerX-r))(t + (playerX-s))
-        //   = fixedA * (t² + ((playerX-r)+(playerX-s))*t + (playerX-r)(playerX-s))
-        // But we want y(0) = playerY (the shot starts at the player dot),
-        // which means the constant term must be 0.
-        // The factored form already implies the shot starts at the player
-        // only if playerX equals r or s — which it won't in general.
-        // So instead we treat r and s as the x-intercepts of the
-        // parabola in the SHIFTED coordinate (t = x - playerX):
-        //   worldY = playerY + fixedA * (t - r)(t - s)
-        // The player enters r and s as roots in the t-axis (distance from player).
-
         var r = parseFloat(document.getElementById("inputR").value);
         var s = parseFloat(document.getElementById("inputS").value);
-
         if (isNaN(r) || isNaN(s)) { setMessage("Enter values for r and s."); return null; }
-
-        // Expand fixedA*(t-r)(t-s) = fixedA*t² - fixedA*(r+s)*t + fixedA*r*s
-        // The constant term fixedA*r*s becomes the y-offset at t=0,
-        // but we want y(0)=playerY, so we subtract it out:
-        //   worldY = playerY + fixedA*t² - fixedA*(r+s)*t
-        // This means the shot starts at the player and the roots (where
-        // it crosses playerY again) are at t=r and t=s.
-
-        var a = fixedA;
-        var b = -fixedA * (r + s);
-
-        return { a: a, b: b };
+        return { a: fixedA, b: -fixedA * (r + s) };
 
       } else if (currentForm === "vertex") {
-
-        // y = fixedA*(x-h)² + k
-        // In shifted coords (t = x - playerX):
-        //   worldY = playerY + fixedA*(t - h)² + k
-        // We want y(0) = playerY, so constant at t=0 must be 0:
-        //   fixedA*h² + k = 0  →  k = -fixedA*h²
-        // But the player enters k freely, so we allow k to shift the
-        // whole arc up or down from the player's position:
-        //   worldY = playerY + fixedA*(t-h)² + k
-        // Expanding: fixedA*t² - 2*fixedA*h*t + fixedA*h² + k
-        // The "extra constant" fixedA*h²+k shifts the starting height.
-        // To keep the shot starting at the player dot we subtract it:
-        //   worldY = playerY + fixedA*t² - 2*fixedA*h*t
-        // and use k as the peak height above playerY:
-        //   vertex is at t=h, peak height above playerY = k (if a<0)
-        // So: a = fixedA, b = -2*fixedA*h, and the peak = playerY + k
-
         var h = parseFloat(document.getElementById("inputH").value);
         var k = parseFloat(document.getElementById("inputK").value);
-
         if (isNaN(h) || isNaN(k)) { setMessage("Enter values for h and k."); return null; }
-
-        // Expand vertex form keeping y(0) = playerY:
-        //   worldY = playerY + fixedA*(t-h)² + k - (fixedA*h² + k)
-        //          = playerY + fixedA*t² - 2*fixedA*h*t
-        var a = fixedA;
-        var b = -2 * fixedA * h;
-
-        return { a: a, b: b };
+        return { a: fixedA, b: -2 * fixedA * h };
       }
-
       return null;
     }
 
-
-    // ── Build the answer hint shown when shots run out ───────────
-    // Works out what values the player should have entered.
     function getAnswer() {
       var dx = enemyX - playerX;
       var dy = enemyY - playerY;
-
       if (currentForm === "general") {
-        // Pick a=-0.2 and solve for b
         var a = -0.2;
         var b = (dy - a * dx * dx) / dx;
         return "a = " + a.toFixed(2) + ",  b = " + b.toFixed(2);
       }
-
       if (currentForm === "factored") {
-        // We need fixedA*t² - fixedA*(r+s)*t = dy at t=dx
-        // fixedA*dx² - fixedA*(r+s)*dx = dy
-        // -(r+s) = (dy - fixedA*dx²) / (fixedA*dx)
-        // One root at t=dx (hits the enemy), another at t=0 means r=0, s=dx
-        // But let's give a nicer hint: r=0 and s=dx
-        var r = 0;
-        var s = dx.toFixed(2);
-        return "r = " + r + ",  s = " + s;
+        return "r = 0,  s = " + dx.toFixed(2);
       }
-
       if (currentForm === "vertex") {
-        // Peak is halfway between player and enemy: h = dx/2
-        // At t=dx, worldY = playerY + fixedA*(dx-h)² - fixedA*h²
-        // We just tell the player h = dx/2 and let them find k
-        var h = (dx / 2).toFixed(2);
-        // k can be anything; give the value that passes exactly through enemy
-        // worldY(dx) = playerY + fixedA*dx² - 2*fixedA*h*dx
-        // = playerY + fixedA*(dx² - 2*(dx/2)*dx)
-        // = playerY + fixedA*(dx² - dx²)
-        // = playerY  ← this only works if dy=0, so give a direct hint instead
-        var hVal = dx / 2;
-        var bVal = -2 * fixedA * hVal;
-        // Use the general solution
-        var aHint = fixedA;
-        var bHint = (dy - aHint * dx * dx) / dx;
-        var hHint = (-bHint / (2 * aHint)).toFixed(2);
-        return "h = " + hHint + "  (find k by testing)";
+        var hVal  = dx / 2;
+        var bHint = (-2 * fixedA * hVal);
+        var hHint = (-bHint / (2 * fixedA)).toFixed(2);
+        return "h = " + hHint + "  (test different k values)";
       }
-
       return "no hint available";
+    }
+
+
+    // ============================================================
+    // BARREL ANGLE HELPER
+    //
+    // Given the parabola y = a*t² + b*t (in grid units, t from player),
+    // the initial slope at t=0 is dy/dt = b.
+    // We convert that slope from grid coords to canvas pixel coords,
+    // then compute the angle with Math.atan2.
+    // ============================================================
+
+    function getBarrelAngle(a, b) {
+      // In grid space the initial slope (rise/run) = b
+      // Convert to pixel space: multiply rise by CELL_HEIGHT and run by CELL_WIDTH
+      // Canvas y is flipped (up = negative py), so negate the rise.
+      var runPx  =  CELL_WIDTH;
+      var risePx = -b * CELL_HEIGHT;   // negative because canvas y flips
+      return Math.atan2(risePx, runPx);
     }
 
 
@@ -847,6 +786,7 @@
     var shotsLeft;
     var playerX, playerY;
     var enemyX,  enemyY;
+    var lastAB     = null;    // stores {a,b} of most recent shot for barrel angle
     var pastShots  = [];
     var isShooting = false;
     var particles  = [];
@@ -894,9 +834,9 @@
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
         if (p.life <= 0) continue;
-        p.x    = p.x + p.vx;
-        p.y    = p.y + p.vy;
-        p.life = p.life - 0.035;
+        p.x    += p.vx;
+        p.y    += p.vy;
+        p.life -= 0.035;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(255, 140, 0, " + p.life + ")";
@@ -914,6 +854,32 @@
       } else {
         setTimeout(done, 200);
       }
+    }
+
+
+    // ============================================================
+    // DRAW DOT WITH BARREL
+    //
+    // Draws a circle with a rectangular barrel attached.
+    // angle = direction the barrel points (radians, canvas coords)
+    // ============================================================
+
+    function drawDotWithBarrel(px, py, dotRadius, color, angle, barrelLen, barrelW) {
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(angle);
+
+      // Barrel — rectangle extending in the +x direction before rotation
+      ctx.fillStyle = color;
+      ctx.fillRect(dotRadius - 2, -barrelW / 2, barrelLen, barrelW);
+
+      ctx.restore();
+
+      // Body circle (drawn after so it sits on top of the barrel root)
+      ctx.beginPath();
+      ctx.arc(px, py, dotRadius, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
     }
 
 
@@ -959,29 +925,35 @@
         ctx.beginPath();
         for (var p = 0; p < path.length; p++) {
           if (p === 0) ctx.moveTo(path[p].px, path[p].py);
-          else ctx.lineTo(path[p].px, path[p].py);
+          else         ctx.lineTo(path[p].px, path[p].py);
         }
         ctx.stroke();
       }
 
-      // Player dot
+      // ── Player dot with barrel ───────────────────────────────
       var player = gridToPixel(playerX, playerY);
-      ctx.beginPath();
-      ctx.arc(player.px, player.py, 9, 0, Math.PI * 2);
-      ctx.fillStyle = "#0cc";
-      ctx.fill();
+      var dotR   = Math.max(7, Math.min(CELL_WIDTH, CELL_HEIGHT) * 0.18);
+      var bLen   = dotR * 2.2;   // barrel length
+      var bW     = dotR * 0.7;   // barrel width
+
+      // Barrel angle: use last shot's a,b if available, otherwise point right
+      var barrelAngle = lastAB ? getBarrelAngle(lastAB.a, lastAB.b) : 0;
+
+      drawDotWithBarrel(player.px, player.py, dotR, "#0cc", barrelAngle, bLen, bW);
+
+      // Player label
       ctx.fillStyle = "rgba(255,255,255,0.55)";
       ctx.font = Math.floor(CELL_HEIGHT * 0.18) + "px monospace";
-      ctx.fillText("(" + playerX + "," + playerY + ")", player.px + 12, player.py - 7);
+      ctx.fillText("(" + playerX + "," + playerY + ")", player.px + dotR + 6, player.py - 7);
 
-      // Enemy dot
+      // ── Enemy dot (no barrel — simpler circle) ───────────────
       var enemy = gridToPixel(enemyX, enemyY);
       ctx.beginPath();
-      ctx.arc(enemy.px, enemy.py, 9, 0, Math.PI * 2);
+      ctx.arc(enemy.px, enemy.py, dotR, 0, Math.PI * 2);
       ctx.fillStyle = "#e44";
       ctx.fill();
       ctx.fillStyle = "rgba(255,255,255,0.55)";
-      ctx.fillText("(" + enemyX + "," + enemyY + ")", enemy.px + 12, enemy.py - 7);
+      ctx.fillText("(" + enemyX + "," + enemyY + ")", enemy.px + dotR + 6, enemy.py - 7);
     }
 
 
@@ -991,14 +963,16 @@
 
     function shoot() {
       if (isShooting) return;
-      if (shotsLeft <= 0) { setMessage("No shots left — press Reset!"); return; }
+      if (shotsLeft <= 0) { setMessage("No shots left!"); return; }
 
-      // Read and validate inputs based on current form
       var inputs = readInputs();
       if (inputs === null) { return; }
 
       var a = inputs.a;
       var b = inputs.b;
+
+      // Save for barrel angle
+      lastAB = { a: a, b: b };
 
       isShooting = true;
       setMessage("");
@@ -1020,7 +994,7 @@
         ctx.lineWidth = 2;
         for (var i = 0; i < path.length; i++) {
           if (i === 0) ctx.moveTo(path[i].px, path[i].py);
-          else ctx.lineTo(path[i].px, path[i].py);
+          else         ctx.lineTo(path[i].px, path[i].py);
         }
         ctx.stroke();
 
@@ -1035,7 +1009,7 @@
           return;
         }
 
-        t = t + 0.05;
+        t += 0.05;
 
         if (worldX > 0 && worldX < GRID_COLS && worldY > 0 && worldY < GRID_ROWS) {
           requestAnimationFrame(step);
@@ -1058,21 +1032,27 @@
       isShooting = false;
       pastShots.push(path);
       if (pastShots.length > 20) pastShots.shift();
-      shotsLeft = shotsLeft - 1;
+      shotsLeft--;
 
       if (didHit) {
         setMessage("Hit!");
         spawnExplosion(hitPx, hitPy);
         animateExplosion(function () {
-          level     = level + 1;
+          level++;
           shotsLeft = 5;
           pastShots = [];
           particles = [];
-          startLevel();       // picks new form, new dots, redraws
+          lastAB    = null;
+          startLevel();
         });
       } else {
         if (shotsLeft <= 0) {
-          setMessage("Out of shots!  Hint: " + getAnswer());
+          // Out of shots — save score and return to home after a short delay
+          saveHighScore();
+          setMessage("Out of shots! Hint: " + getAnswer() + " — returning to menu…");
+          setTimeout(function() {
+            goTo("screen-home");
+          }, 3500);
         } else {
           setMessage("Miss!");
         }
@@ -1093,23 +1073,22 @@
 
     // ============================================================
     // START LEVEL
-    // Called at the start of each new level (including level 1).
-    // Picks the form, places dots, rebuilds controls.
     // ============================================================
 
     function startLevel() {
-      pickForm(level);          // sets currentForm and fixedA
-      placeDots();              // sets playerX/Y, enemyX/Y
+      pickForm(level);
+      placeDots();
+      lastAB = null;
       setMessage("");
       updateHUD();
-      renderControls();         // rebuilds the input bar for the new form
+      renderControls();
       resizeCanvas();
       draw();
     }
 
 
     // ============================================================
-    // START GAME — resets everything back to level 1
+    // START GAME
     // ============================================================
 
     function startGame() {
@@ -1118,6 +1097,7 @@
       pastShots  = [];
       particles  = [];
       isShooting = false;
+      lastAB     = null;
       startLevel();
     }
 
