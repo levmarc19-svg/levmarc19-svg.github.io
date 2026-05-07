@@ -7,14 +7,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
 
-    /* ============================================================
-       GLOBAL RESET + THEME
-    ============================================================ */
     :root {
-      --red:    #e02020;
-      --white:  #ffffff;
-      --black:  #000000;
-      --grey:   #aaaaaa;
+      --red:       #e02020;
+      --white:     #ffffff;
+      --black:     #000000;
+      --grey:      #aaaaaa;
       --grid-line: rgba(255,255,255,0.09);
     }
 
@@ -37,23 +34,23 @@
         linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
       background-size: 60px 60px;
       pointer-events: none;
+      z-index: 0;
     }
 
     /* ── SCREEN BASE ────────────────────────────────────────── */
-    /* Every "page" is stacked full-viewport. JS swaps them. */
     .screen {
       position: fixed;
       inset: 0;
-      display: none;               /* hidden by default */
+      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       background: var(--black);
     }
 
-    .screen.active { display: flex; }   /* JS adds this to show a screen */
+    .screen.active { display: flex; }
 
-    /* ── SHARED TITLE LOGO ──────────────────────────────────── */
+    /* ── LOGO ───────────────────────────────────────────────── */
     .logo {
       font-family: 'Bebas Neue', sans-serif;
       font-size: clamp(48px, 8vw, 96px);
@@ -62,6 +59,8 @@
       display: flex;
       align-items: center;
       margin-bottom: 6px;
+      position: relative;
+      z-index: 2;
     }
 
     .logo .star { color: var(--red); }
@@ -70,15 +69,19 @@
       width: min(480px, 72vw);
       height: 2px;
       background: var(--white);
-      margin-bottom: 50px;
+      margin-bottom: 40px;
+      position: relative;
+      z-index: 2;
     }
 
-    /* ── SHARED MENU BUTTON STYLE ───────────────────────────── */
+    /* ── BUTTONS ────────────────────────────────────────────── */
     .menu {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 14px;
+      position: relative;
+      z-index: 2;
     }
 
     .btn {
@@ -97,7 +100,6 @@
       transition: border-color 0.2s;
     }
 
-    /* Red sweep on hover */
     .btn::before {
       content: '';
       position: absolute;
@@ -111,40 +113,53 @@
 
     .btn:hover::before  { transform: scaleX(1); }
     .btn:hover          { border-color: var(--red); }
+    .btn span           { position: relative; z-index: 1; }
 
-    /* Button label sits above the sweep */
-    .btn span { position: relative; z-index: 1; }
+    .btn.primary        { background: var(--red); border-color: var(--red); }
 
-    /* Red-filled primary button */
-    .btn.primary {
-      background: var(--red);
-      border-color: var(--red);
-    }
-
-    /* Dimmed/disabled button (Coming Soon) */
     .btn.disabled {
       opacity: 0.4;
       cursor: not-allowed;
       border-color: rgba(255,255,255,0.1);
     }
-
     .btn.disabled::before { display: none; }
 
-    /* "Coming Soon" badge under disabled buttons */
     .coming-soon {
       font-size: 11px;
       letter-spacing: 2px;
       color: var(--grey);
       text-transform: uppercase;
       margin-top: -8px;
+      position: relative;
+      z-index: 2;
     }
+
+    /* ── BACK BUTTON ────────────────────────────────────────── */
+    .back-btn {
+      position: absolute;
+      top: 24px;
+      left: 28px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 3px;
+      color: var(--grey);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s;
+      z-index: 10;
+    }
+
+    .back-btn:hover { color: var(--white); }
 
     /* ── USERNAME INPUT ─────────────────────────────────────── */
     .username-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 50px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 2;
     }
 
     .username-row label {
@@ -171,34 +186,39 @@
     .username-row input::placeholder { color: rgba(255,255,255,0.2); }
     .username-row input:focus        { border-color: var(--red); }
 
+    /* ── HIGH SCORE ─────────────────────────────────────────── */
+    #highscore-display {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--grey);
+      text-transform: uppercase;
+      margin-bottom: 34px;
+      min-height: 18px;
+      position: relative;
+      z-index: 2;
+    }
+
+    #highscore-display .hs-name  { color: var(--white); }
+    #highscore-display .hs-level { color: var(--red); }
+
 
     /* ============================================================
-       SCREEN 1 — INTRO (video slots)
-       Replace the src="" values with your video URLs.
+       SCREEN 1 — INTRO
     ============================================================ */
     #screen-intro { background: var(--black); }
-
-    #intro-video {
-      width: min(500px, 80vw);
-      height: min(500px, 80vw);
-      object-fit: contain;
-      display: block;
-      position: relative;
-      z-index: 1;
-    }
 
 
     /* ============================================================
        SCREEN 2 — HOME
-       Your background image shows here.
-       Replace url('') with your image URL/path.
     ============================================================ */
     #screen-home { justify-content: center; }
 
     .home-bg {
       position: absolute;
       inset: 0;
-      background-image: url('Home_Page_Background.png'); /* ← your image here */
+      background-image: url('Home_Page_Background.png');
       background-size: cover;
       background-position: top center;
       z-index: 0;
@@ -209,16 +229,16 @@
       inset: 0;
       background: linear-gradient(
         to bottom,
-        rgba(0,0,0,0.2) 0%,
-        rgba(0,0,0,0.6) 55%,
-        rgba(0,0,0,0.95) 100%
+        rgba(0,0,0,0.25) 0%,
+        rgba(0,0,0,0.62) 55%,
+        rgba(0,0,0,0.96) 100%
       );
       z-index: 1;
     }
 
     .home-content {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -226,25 +246,9 @@
 
 
     /* ============================================================
-       SCREEN 3 — MODE SELECT (Play → PvE / PvP / Sandbox)
+       SCREEN 3 — MODE SELECT
     ============================================================ */
     #screen-mode { background: var(--black); }
-
-    .back-btn {
-      position: absolute;
-      top: 24px;
-      left: 28px;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 16px;
-      letter-spacing: 3px;
-      color: var(--grey);
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-
-    .back-btn:hover { color: var(--white); }
 
     .mode-subtitle {
       font-family: 'Rajdhani', sans-serif;
@@ -254,86 +258,138 @@
       color: var(--grey);
       text-transform: uppercase;
       margin-bottom: 48px;
+      position: relative;
+      z-index: 2;
     }
 
 
     /* ============================================================
-       SCREEN 4 — GAME (the parabola canvas)
+       SCREEN 4 — GAME
+       The canvas fills the entire screen. The HUD and controls
+       float over it as overlays.
     ============================================================ */
     #screen-game {
-      background: #000;
-      overflow-y: auto;
-      padding: 20px;
-      align-items: flex-start;
-      justify-content: flex-start;
+      background: var(--black);
+      padding: 0;
+      overflow: hidden;
+      align-items: stretch;
+      justify-content: stretch;
     }
 
-    #screen-game .back-btn { color: #555; }
-    #screen-game .back-btn:hover { color: #000; }
-
-    #game-wrap {
-      margin-top: 40px;   /* space below the back button */
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
+    /* The canvas takes up the full screen */
+    #c {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: var(--black);
     }
 
-    /* Game title in dark theme to match site */
+    /* HUD floats in the top-right corner over the canvas */
+    #game-hud {
+      position: absolute;
+      top: 20px;
+      right: 28px;
+      z-index: 10;
+      text-align: right;
+    }
+
     #game-title {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 28px;
+      font-size: 22px;
       letter-spacing: 4px;
-      color: #333;
-      margin-bottom: 6px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 2px;
     }
 
     #hud {
-      margin: 0 0 6px;
-      color: #555;
-      font-size: 13px;
-      font-family: monospace;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: var(--white);
     }
 
-    canvas {
-      border: 1px solid #aaa;
-      background: white;
-      display: block;
-    }
-
-    .controls {
-      margin-top: 8px;
+    /* Controls float along the bottom of the screen */
+    #game-controls {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
       display: flex;
       align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      font-family: monospace;
+      gap: 10px;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 12px 24px;
+      backdrop-filter: blur(6px);
     }
 
-    .controls input {
-      font-family: monospace;
-      width: 60px;
-      padding: 4px;
-      border: 1px solid #aaa;
-      border-radius: 4px;
-      background: white;
-      color: #000;
+    #game-controls span {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      color: var(--white);
     }
 
-    .controls button {
-      font-family: monospace;
-      padding: 4px 10px;
+    #game-controls input {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      width: 70px;
+      padding: 4px 8px;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 3px;
+      background: rgba(255,255,255,0.07);
+      color: var(--white);
+      outline: none;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+
+    #game-controls input:focus { border-color: var(--red); }
+
+    #game-controls button {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 3px;
+      padding: 6px 20px;
       cursor: pointer;
-      border: 1px solid #aaa;
-      border-radius: 4px;
-      background: white;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.07);
+      color: var(--white);
+      transition: background 0.2s, border-color 0.2s;
     }
 
+    #game-controls button:hover {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    #game-controls button.shoot-btn {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    #game-controls button.shoot-btn:hover {
+      background: #ff3a3a;
+    }
+
+    /* Message floats just above the controls */
     #msg {
-      color: red;
-      font-weight: bold;
-      margin-top: 6px;
-      min-height: 1.2em;
-      font-family: monospace;
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 4px;
+      color: var(--red);
+      min-height: 28px;
+      white-space: nowrap;
     }
 
   </style>
@@ -343,58 +399,55 @@
 
   <!-- ============================================================
        SCREEN 1 — INTRO VIDEOS
-       Slot 1: Opening logo animation
-       Slot 2: Loading screen animation
-       To use: set the src attributes to your video file paths or URLs.
+
+       ╔══════════════════════════════════════════════════════════╗
+       ║  PASTE YOUR VIDEO PATHS INTO THE src="" BELOW           ║
+       ║                                                          ║
+       ║  Local file example:  src="Opening_Scene.mp4"           ║
+       ║  Hosted URL example:  src="https://example.com/vid.mp4" ║
+       ╚══════════════════════════════════════════════════════════╝
   ============================================================ -->
   <div id="screen-intro" class="screen active">
     <div class="grid-bg"></div>
 
-    <!--
-      VIDEO SLOT 1 — Opening logo video
-      Replace src="" with your video path, e.g. src="Opening_Scene.mp4"
-    -->
+    <!-- VIDEO 1 — Opening logo animation. Put your file path in src="" -->
     <video id="video-opening" muted playsinline preload="auto"
            src="Opening Scene.mp4"
            style="position:relative;z-index:1;width:min(500px,80vw);height:min(500px,80vw);object-fit:contain;display:block;">
     </video>
 
-    <!--
-      VIDEO SLOT 2 — Loading screen video (hidden until slot 1 ends)
-      Replace src="" with your video path, e.g. src="Loading_screen__1_.mp4"
-    -->
+    <!-- VIDEO 2 — Loading screen animation. Put your file path in src="" -->
     <video id="video-loading" muted playsinline preload="auto"
            src="Loading screen (1).mp4"
            style="position:relative;z-index:1;width:min(500px,80vw);height:min(500px,80vw);object-fit:contain;display:none;">
     </video>
-
   </div>
 
 
   <!-- ============================================================
-       SCREEN 2 — HOME MENU
+       SCREEN 2 — HOME
   ============================================================ -->
   <div id="screen-home" class="screen">
     <div class="home-bg"></div>
     <div class="home-overlay"></div>
+    <div class="grid-bg" style="z-index:2; opacity:0.5;"></div>
 
     <div class="home-content">
-
       <div class="logo">Math&nbsp;Att<span class="star">✦</span>que</div>
       <div class="logo-underline"></div>
 
-      <!-- Username field -->
       <div class="username-row">
         <label for="username-input">Player:</label>
         <input id="username-input" type="text" placeholder="Enter username" maxlength="20">
       </div>
+
+      <div id="highscore-display"></div>
 
       <nav class="menu">
         <button class="btn primary" onclick="goTo('screen-mode')">
           <span>Play</span>
         </button>
       </nav>
-
     </div>
   </div>
 
@@ -404,60 +457,55 @@
   ============================================================ -->
   <div id="screen-mode" class="screen">
     <div class="grid-bg"></div>
-
     <button class="back-btn" onclick="goTo('screen-home')">← Back</button>
 
-    <div class="logo" style="font-size: clamp(32px,5vw,60px); margin-bottom:4px;">
+    <div class="logo" style="font-size:clamp(32px,5vw,58px); margin-bottom:4px;">
       Select Mode
     </div>
     <div class="logo-underline" style="margin-bottom:10px;"></div>
     <p class="mode-subtitle">Choose your battlefield</p>
 
     <nav class="menu">
-
-      <!-- PvE — leads to the game -->
       <button class="btn primary" onclick="goTo('screen-game'); startGame();">
         <span>PvE</span>
       </button>
-
-      <!-- PvP — coming soon -->
-      <button class="btn disabled" disabled>
-        <span>PvP</span>
-      </button>
+      <button class="btn disabled" disabled><span>PvP</span></button>
       <p class="coming-soon">Coming Soon</p>
-
-      <!-- Sandbox — coming soon -->
-      <button class="btn disabled" disabled>
-        <span>Sandbox</span>
-      </button>
+      <button class="btn disabled" disabled><span>Sandbox</span></button>
       <p class="coming-soon">Coming Soon</p>
-
     </nav>
   </div>
 
 
   <!-- ============================================================
-       SCREEN 4 — PARABOLA GAME
+       SCREEN 4 — GAME (fullscreen canvas with floating UI)
   ============================================================ -->
   <div id="screen-game" class="screen">
 
-    <button class="back-btn" onclick="goTo('screen-mode')">← Back</button>
+    <!-- Canvas fills the entire screen -->
+    <canvas id="c"></canvas>
 
-    <div id="game-wrap">
+    <!-- Back button top-left -->
+    <button class="back-btn" onclick="returnToHome()">← Back</button>
+
+    <!-- HUD top-right -->
+    <div id="game-hud">
       <div id="game-title">Math Att✦que — PvE</div>
-      <p id="hud"></p>
-      <canvas id="c" width="600" height="700"></canvas>
+      <div id="hud"></div>
+    </div>
 
-      <div class="controls">
-        <span>y =</span>
-        <input id="inputA" placeholder="a">
-        <span>x² +</span>
-        <input id="inputB" placeholder="b">
-        <span>x</span>
-        <button onclick="shoot()">Shoot</button>
-        <button onclick="startGame()">Reset</button>
-      </div>
-      <div id="msg"></div>
+    <!-- Message above controls -->
+    <div id="msg"></div>
+
+    <!-- Controls bottom-centre -->
+    <div id="game-controls">
+      <span>y =</span>
+      <input id="inputA" placeholder="a">
+      <span>x² +</span>
+      <input id="inputB" placeholder="b">
+      <span>x</span>
+      <button class="shoot-btn" onclick="shoot()">Shoot</button>
+      <button onclick="startGame()">Reset</button>
     </div>
 
   </div>
@@ -467,7 +515,6 @@
 
     // ============================================================
     // SCREEN NAVIGATION
-    // goTo("screen-id") hides all screens and shows the chosen one.
     // ============================================================
 
     function goTo(screenId) {
@@ -478,11 +525,42 @@
       document.getElementById(screenId).classList.add("active");
     }
 
+    // Called when pressing Back from the game — saves score first
+    function returnToHome() {
+      saveHighScore();
+      goTo("screen-home");
+    }
+
+
+    // ============================================================
+    // HIGH SCORE
+    // ============================================================
+
+    var highScore = { name: "", level: 0 };
+
+    function saveHighScore() {
+      var username = document.getElementById("username-input").value.trim();
+      if (username === "") { username = "Anonymous"; }
+      if (level > highScore.level) {
+        highScore.name  = username;
+        highScore.level = level;
+      }
+      showHighScore();
+    }
+
+    function showHighScore() {
+      var display = document.getElementById("highscore-display");
+      if (highScore.level === 0) { display.textContent = ""; return; }
+      display.innerHTML =
+        "Best: " +
+        "<span class='hs-name'>"  + highScore.name  + "</span>" +
+        " — Level " +
+        "<span class='hs-level'>" + highScore.level + "</span>";
+    }
+
 
     // ============================================================
     // INTRO VIDEO SEQUENCE
-    // Plays video 1, then video 2, then goes to the home screen.
-    // If either video is missing or blocked, skips after a timeout.
     // ============================================================
 
     var videoOpening = document.getElementById("video-opening");
@@ -491,76 +569,73 @@
     function playOpeningVideo() {
       videoOpening.style.display = "block";
       videoLoading.style.display = "none";
-
       var fallback = setTimeout(playLoadingVideo, 6000);
-
-      videoOpening.addEventListener("ended", function () {
-        clearTimeout(fallback);
-        playLoadingVideo();
-      });
-
-      videoOpening.addEventListener("error", function () {
-        clearTimeout(fallback);
-        playLoadingVideo();
-      });
-
-      videoOpening.play().catch(function () {
-        clearTimeout(fallback);
-        playLoadingVideo();
-      });
+      videoOpening.addEventListener("ended", function () { clearTimeout(fallback); playLoadingVideo(); });
+      videoOpening.addEventListener("error", function () { clearTimeout(fallback); playLoadingVideo(); });
+      videoOpening.play().catch(function () { clearTimeout(fallback); playLoadingVideo(); });
     }
 
     function playLoadingVideo() {
       videoOpening.style.display = "none";
       videoLoading.style.display = "block";
-
-      var fallback = setTimeout(goToHome, 7000);
-
-      videoLoading.addEventListener("ended", function () {
-        clearTimeout(fallback);
-        goToHome();
-      });
-
-      videoLoading.addEventListener("error", function () {
-        clearTimeout(fallback);
-        goToHome();
-      });
-
-      videoLoading.play().catch(function () {
-        clearTimeout(fallback);
-        goToHome();
-      });
+      var fallback = setTimeout(goToHomeFn, 7000);
+      videoLoading.addEventListener("ended", function () { clearTimeout(fallback); goToHomeFn(); });
+      videoLoading.addEventListener("error", function () { clearTimeout(fallback); goToHomeFn(); });
+      videoLoading.play().catch(function () { clearTimeout(fallback); goToHomeFn(); });
     }
 
-    function goToHome() {
-      goTo("screen-home");
-    }
+    function goToHomeFn() { goTo("screen-home"); }
 
-    // Kick off the intro
     playOpeningVideo();
 
 
     // ============================================================
-    // PARABOLA GAME
+    // CANVAS SETUP
+    // The canvas is always the full window size.
+    // The grid is drawn to fill the entire canvas.
+    // Dots are placed only in the left 1/4 (player) and right 1/4
+    // (enemy) of the grid so the arc has room in the middle.
     // ============================================================
 
     var canvas = document.getElementById("c");
-    var ctx = canvas.getContext("2d");
+    var ctx    = canvas.getContext("2d");
 
-    var CANVAS_WIDTH  = 600;
-    var CANVAS_HEIGHT = 700;
-    var CELL_WIDTH    = 60;
-    var CELL_HEIGHT   = 70;
+    // How many grid columns and rows to draw
+    var GRID_COLS = 16;
+    var GRID_ROWS = 10;
+
+    var CANVAS_WIDTH, CANVAS_HEIGHT, CELL_WIDTH, CELL_HEIGHT;
+
+    // Resize the canvas to exactly fill the window
+    function resizeCanvas() {
+      CANVAS_WIDTH  = window.innerWidth;
+      CANVAS_HEIGHT = window.innerHeight;
+      CELL_WIDTH    = CANVAS_WIDTH  / GRID_COLS;
+      CELL_HEIGHT   = CANVAS_HEIGHT / GRID_ROWS;
+      canvas.width  = CANVAS_WIDTH;
+      canvas.height = CANVAS_HEIGHT;
+    }
+
+    window.addEventListener("resize", function () {
+      resizeCanvas();
+      if (typeof playerX !== "undefined") { draw(); }
+    });
+
+
+    // ============================================================
+    // GAME STATE
+    // ============================================================
 
     var level;
     var shotsLeft;
     var playerX, playerY;
-    var enemyX, enemyY;
-    var pastShots = [];
+    var enemyX,  enemyY;
+    var pastShots  = [];
     var isShooting = false;
     var particles  = [];
 
 
+    // Convert grid coordinates to pixel coordinates on the canvas
     function gridToPixel(gridX, gridY) {
       return {
         px: gridX * CELL_WIDTH,
@@ -572,27 +647,31 @@
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    // Player spawns on the left, enemy spawns on the right
+    // The grid is 16 wide so we use cols 1-3 for player, 12-15 for enemy
     function placeDots() {
       playerX = randomInt(1, 3);
-      playerY = randomInt(1, 4);
-      enemyX  = randomInt(6, 9);
-      enemyY  = randomInt(1, 4);
+      playerY = randomInt(2, 6);
+      enemyX  = randomInt(12, 15);
+      enemyY  = randomInt(2, 6);
     }
 
-    // ── EXPLOSION ───────────────────────────────────────────────
+
+    // ============================================================
+    // EXPLOSION PARTICLES
+    // ============================================================
 
     function spawnExplosion(px, py) {
       particles = [];
-      var numParticles = 12;
-      for (var i = 0; i < numParticles; i++) {
-        var angle = (i / numParticles) * Math.PI * 2;
-        var speed = 2 + Math.random() * 3;
+      for (var i = 0; i < 16; i++) {
+        var angle = (i / 16) * Math.PI * 2;
+        var speed = 3 + Math.random() * 4;
         particles.push({
           x: px, y: py,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           life: 1.0,
-          radius: 4 + Math.random() * 3
+          radius: 4 + Math.random() * 4
         });
       }
     }
@@ -602,9 +681,9 @@
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
         if (p.life <= 0) continue;
-        p.x = p.x + p.vx;
-        p.y = p.y + p.vy;
-        p.life = p.life - 0.04;
+        p.x    = p.x + p.vx;
+        p.y    = p.y + p.vy;
+        p.life = p.life - 0.035;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(255, 140, 0, " + p.life + ")";
@@ -624,37 +703,47 @@
       }
     }
 
-    // ── DRAW ────────────────────────────────────────────────────
+
+    // ============================================================
+    // DRAW — paints everything onto the fullscreen canvas
+    // ============================================================
 
     function draw() {
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      // Black background fills the whole window
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // Grid lines
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
-      for (var col = 0; col <= 10; col++) {
+      // White grid lines, semi-transparent
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.lineWidth = 1;
+
+      for (var col = 0; col <= GRID_COLS; col++) {
         ctx.beginPath();
         ctx.moveTo(col * CELL_WIDTH, 0);
         ctx.lineTo(col * CELL_WIDTH, CANVAS_HEIGHT);
         ctx.stroke();
       }
-      for (var row = 0; row <= 10; row++) {
+
+      for (var row = 0; row <= GRID_ROWS; row++) {
         ctx.beginPath();
         ctx.moveTo(0, row * CELL_HEIGHT);
         ctx.lineTo(CANVAS_WIDTH, row * CELL_HEIGHT);
         ctx.stroke();
       }
 
-      // Axis numbers
-      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-      ctx.font = "11px monospace";
-      for (var i = 1; i <= 10; i++) {
-        ctx.fillText(i, i * CELL_WIDTH + 2, CANVAS_HEIGHT - 4);
-        ctx.fillText(i, 2, CANVAS_HEIGHT - i * CELL_HEIGHT - 2);
+      // Axis numbers along the bottom and left
+      ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+      ctx.font = Math.floor(CELL_HEIGHT * 0.2) + "px monospace";
+      for (var i = 1; i <= GRID_COLS; i++) {
+        ctx.fillText(i, i * CELL_WIDTH + 4, CANVAS_HEIGHT - 6);
+      }
+      for (var j = 1; j <= GRID_ROWS; j++) {
+        ctx.fillText(j, 4, CANVAS_HEIGHT - j * CELL_HEIGHT - 4);
       }
 
-      // Past shots
-      ctx.strokeStyle = "rgba(100, 100, 255, 0.25)";
-      ctx.lineWidth = 1.5;
+      // Past shots (faded blue trails)
+      ctx.strokeStyle = "rgba(120, 160, 255, 0.18)";
+      ctx.lineWidth = 2;
       for (var s = 0; s < pastShots.length; s++) {
         var path = pastShots[s];
         ctx.beginPath();
@@ -664,29 +753,31 @@
         }
         ctx.stroke();
       }
-      ctx.lineWidth = 1;
 
-      // Player dot (cyan)
+      // Player dot — cyan
       var player = gridToPixel(playerX, playerY);
       ctx.beginPath();
-      ctx.arc(player.px, player.py, 7, 0, Math.PI * 2);
+      ctx.arc(player.px, player.py, 9, 0, Math.PI * 2);
       ctx.fillStyle = "#0cc";
       ctx.fill();
-      ctx.fillStyle = "#555";
-      ctx.font = "11px monospace";
-      ctx.fillText("(" + playerX + "," + playerY + ")", player.px + 9, player.py - 5);
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.font = Math.floor(CELL_HEIGHT * 0.18) + "px monospace";
+      ctx.fillText("(" + playerX + "," + playerY + ")", player.px + 12, player.py - 7);
 
-      // Enemy dot (red)
+      // Enemy dot — red
       var enemy = gridToPixel(enemyX, enemyY);
       ctx.beginPath();
-      ctx.arc(enemy.px, enemy.py, 7, 0, Math.PI * 2);
+      ctx.arc(enemy.px, enemy.py, 9, 0, Math.PI * 2);
       ctx.fillStyle = "#e44";
       ctx.fill();
-      ctx.fillStyle = "#555";
-      ctx.fillText("(" + enemyX + "," + enemyY + ")", enemy.px + 9, enemy.py - 5);
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.fillText("(" + enemyX + "," + enemyY + ")", enemy.px + 12, enemy.py - 7);
     }
 
-    // ── SHOOT ───────────────────────────────────────────────────
+
+    // ============================================================
+    // SHOOT
+    // ============================================================
 
     function shoot() {
       if (isShooting) return;
@@ -695,12 +786,11 @@
       var a = parseFloat(document.getElementById("inputA").value);
       var b = parseFloat(document.getElementById("inputB").value);
 
-      if (isNaN(a) || isNaN(b)) { setMessage("Please enter values for a and b."); return; }
-      if (Math.abs(a) < 0.1)    { setMessage("a cannot be 0 (or near 0). Try -0.5"); return; }
+      if (isNaN(a) || isNaN(b)) { setMessage("Enter values for a and b."); return; }
+      if (Math.abs(a) < 0.05)   { setMessage("a is too close to 0. Try -0.3"); return; }
 
-      a = Math.max(-2, Math.min(2, a));
-      b = Math.max(-10, Math.min(10, b));
-
+      a = Math.max(-5, Math.min(5, a));
+      b = Math.max(-20, Math.min(20, b));
       if (a > 0) { a = -a; }
 
       isShooting = true;
@@ -712,22 +802,25 @@
       function step() {
         var worldX = playerX + t;
         var worldY = playerY + (a * t * t + b * t);
-        var pos = gridToPixel(worldX, worldY);
+        var pos    = gridToPixel(worldX, worldY);
 
         path.push(pos);
         draw();
 
+        // Draw the shot trail in white
         ctx.beginPath();
-        ctx.strokeStyle = "rgba(0,0,0,0.7)";
+        ctx.strokeStyle = "rgba(255,255,255,0.75)";
+        ctx.lineWidth = 2;
         for (var i = 0; i < path.length; i++) {
           if (i === 0) ctx.moveTo(path[i].px, path[i].py);
           else ctx.lineTo(path[i].px, path[i].py);
         }
         ctx.stroke();
 
+        // Projectile dot
         ctx.beginPath();
-        ctx.arc(pos.px, pos.py, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "blue";
+        ctx.arc(pos.px, pos.py, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#88aaff";
         ctx.fill();
 
         if (isNearEnemy(pos.px, pos.py)) {
@@ -737,7 +830,8 @@
 
         t = t + 0.05;
 
-        if (worldX > 0 && worldX < 10 && worldY > 0 && worldY < 10) {
+        // Keep animating while the shot is within the grid
+        if (worldX > 0 && worldX < GRID_COLS && worldY > 0 && worldY < GRID_ROWS) {
           requestAnimationFrame(step);
         } else {
           finishShot(path, false, pos.px, pos.py);
@@ -751,7 +845,7 @@
       var enemy = gridToPixel(enemyX, enemyY);
       var dx = px - enemy.px;
       var dy = py - enemy.py;
-      return Math.sqrt(dx * dx + dy * dy) < 12;
+      return Math.sqrt(dx * dx + dy * dy) < 14;
     }
 
     function finishShot(path, didHit, hitPx, hitPy) {
@@ -764,7 +858,7 @@
         setMessage("Hit!");
         spawnExplosion(hitPx, hitPy);
         animateExplosion(function () {
-          level = level + 1;
+          level     = level + 1;
           shotsLeft = 5;
           pastShots = [];
           particles = [];
@@ -774,7 +868,7 @@
         });
       } else {
         if (shotsLeft <= 0) {
-          setMessage("Out of shots! Answer was: " + getAnswer());
+          setMessage("Out of shots!  Answer: " + getAnswer());
         } else {
           setMessage("Miss!");
         }
@@ -786,14 +880,14 @@
     function getAnswer() {
       var dx = enemyX - playerX;
       var dy = enemyY - playerY;
-      var a  = -0.2;
+      var a  = -0.15;
       var b  = (dy - a * dx * dx) / dx;
       return a.toFixed(2) + "x² + " + b.toFixed(2) + "x";
     }
 
     function updateHUD() {
       document.getElementById("hud").textContent =
-        "Level: " + level + " | Shots left: " + shotsLeft;
+        "Level: " + level + "   |   Shots: " + shotsLeft;
     }
 
     function setMessage(text) {
@@ -806,6 +900,7 @@
       pastShots  = [];
       particles  = [];
       isShooting = false;
+      resizeCanvas();
       placeDots();
       setMessage("");
       updateHUD();
