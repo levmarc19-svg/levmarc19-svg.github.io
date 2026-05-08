@@ -1,0 +1,1047 @@
+/*
+ * ╔══════════════════════════════════════════════════════════════╗
+ * ║  style.css — Math Attaque                                   ║
+ * ║                                                              ║
+ * ║  Organisation:                                               ║
+ * ║    1.  CSS Custom Properties (design tokens)                ║
+ * ║    2.  Reset & base                                          ║
+ * ║    3.  Custom cursor                                         ║
+ * ║    4.  Grid background                                       ║
+ * ║    5.  Screen system                                         ║
+ * ║    6.  Logo & branding                                       ║
+ * ║    7.  Shared button styles                                  ║
+ * ║    8.  Home screen                                           ║
+ * ║    9.  Mode-select screen                                    ║
+ * ║   10.  PvE game screen                                       ║
+ * ║   11.  Sandbox screen                                        ║
+ * ╚══════════════════════════════════════════════════════════════╝
+ */
+
+
+/* ─────────────────────────────────────────────────────────────────
+   1. CSS CUSTOM PROPERTIES
+   Design tokens — change these to retheme the whole UI at once.
+   Reference: MDN CSS custom properties
+   https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties
+───────────────────────────────────────────────────────────────── */
+:root {
+  --red:    #e02020;  /* Primary danger / action colour       */
+  --cyan:   #00cccc;  /* Sandbox accent colour                */
+  --yellow: #ffe44d;  /* Hint / laser / warning colour        */
+  --white:  #ffffff;
+  --black:  #000000;
+  --grey:   #aaaaaa;  /* Muted labels and secondary text      */
+  --panel:  rgba(10,10,10,0.95);   /* Sidebar background      */
+  --border: rgba(255,255,255,0.1); /* Subtle dividers          */
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   2. RESET & BASE
+   Box-sizing border-box: width/height include padding & border.
+   Reference: CSS-Tricks box-sizing
+   https://css-tricks.com/box-sizing/
+───────────────────────────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  font-family: 'Rajdhani', sans-serif; /* Body font loaded via Google Fonts */
+  overflow: hidden;  /* No page scroll — everything lives in fixed screens */
+  color: #fff;
+  cursor: none;      /* Hide native cursor; we use #custom-cursor SVG      */
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   3. CUSTOM CURSOR
+   The SVG element #custom-cursor follows the mouse via JS.
+   pointer-events:none so it never blocks underlying clicks.
+   z-index:99999 keeps it above every other layer.
+   Reference: CSS cursor customisation
+   https://developer.mozilla.org/en-US/docs/Web/CSS/cursor
+───────────────────────────────────────────────────────────────── */
+#custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%); /* Centre the SVG on the exact mouse point */
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   4. GRID BACKGROUND
+   Two layered CSS gradients create a faint grid pattern.
+   background-size:60px 60px = one grid cell.
+   Used on menu screens for a "graph paper" feel.
+   Reference: CSS repeating-gradient pattern trick
+   https://css-tricks.com/stripes-css/
+───────────────────────────────────────────────────────────────── */
+.grid-bg {
+  position: absolute;
+  inset: 0; /* shorthand for top/right/bottom/left:0 */
+  background-image:
+    linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   5. SCREEN SYSTEM
+   All five screens share .screen and are positioned:fixed so they
+   stack perfectly.  Only the one with class "active" is shown.
+   goTo() in utils.js toggles these classes.
+───────────────────────────────────────────────────────────────── */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: none;           /* Hidden by default                  */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+/* JS adds/removes this class to show/hide screens */
+.screen.active {
+  display: flex;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   6. LOGO & BRANDING
+   clamp() provides fluid font sizing between a min and max.
+   Reference: MDN clamp()
+   https://developer.mozilla.org/en-US/docs/Web/CSS/clamp
+───────────────────────────────────────────────────────────────── */
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 8vw, 96px); /* Scales between 48px and 96px */
+  letter-spacing: 5px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 2;
+}
+
+/* The ✦ glyph inside the logo gets its own red colour */
+.logo .star {
+  color: var(--red);
+}
+
+/* White underline rule beneath the logo */
+.logo-underline {
+  width: min(480px, 72vw);
+  height: 2px;
+  background: #fff;
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 2;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   7. SHARED BUTTON STYLES
+   .btn uses a CSS transform scaleX fill trick for the hover effect:
+     - ::before pseudo-element starts at scaleX(0)
+     - On hover it scales to 1 → red fill sweeps left-to-right
+   This avoids background-color transitions that can look janky.
+
+   Reference: CSS sliding fill button technique
+   https://tympanus.net/codrops/2015/02/26/inspiration-button-styles-effects/
+───────────────────────────────────────────────────────────────── */
+
+/* Vertical stack of buttons in menu screens */
+.menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Base button */
+.btn {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(18px, 2.8vw, 26px);
+  letter-spacing: 4px;
+  color: #fff;
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.25);
+  padding: 13px 60px;
+  min-width: 280px;
+  text-align: center;
+  cursor: none;
+  position: relative;
+  overflow: hidden;          /* Clip the ::before fill to the button shape */
+  transition: border-color 0.2s;
+}
+
+/* Sliding red fill */
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.22s ease;
+  z-index: 0;
+}
+.btn:hover::before { transform: scaleX(1); }
+.btn:hover         { border-color: var(--red); }
+
+/* .btn text must be above the ::before fill */
+.btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* Variants */
+.btn.primary { background: var(--red);  border-color: var(--red); }
+
+.btn.cyan    { background: var(--cyan); border-color: var(--cyan); color: #000; }
+.btn.cyan::before  { background: var(--cyan); }
+.btn.cyan:hover    { border-color: #00eeee; }
+
+/* Disabled: no hover effect, low opacity */
+.btn.disabled {
+  opacity: 0.4;
+  cursor: none;
+  border-color: rgba(255,255,255,0.1);
+}
+.btn.disabled::before { display: none; }
+
+/* "Coming Soon" label under disabled PvP button */
+.coming-soon {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--grey);
+  text-transform: uppercase;
+  margin-top: -8px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ← Back button — top-left corner of game/mode screens */
+.back-btn {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: var(--grey);
+  background: none;
+  border: none;
+  cursor: none;
+  transition: color 0.2s;
+  z-index: 10;
+}
+.back-btn:hover { color: #fff; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   8. HOME SCREEN
+   – Full-bleed background image (Home_Page_Background.png)
+   – Gradient overlay fades from transparent top to near-black bottom
+   – Username input line uses a bottom-border-only style for a
+     minimal "underline input" look.
+───────────────────────────────────────────────────────────────── */
+#screen-home { justify-content: center; }
+
+/* Background photo layer */
+.home-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('Home_Page_Background.png');
+  background-size: cover;
+  background-position: top center;
+  z-index: 0;
+}
+
+/* Dark gradient overlay so white text remains legible */
+.home-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.25)  0%,   /* Nearly transparent at the top    */
+    rgba(0,0,0,0.62) 55%,   /* Mid fade                          */
+    rgba(0,0,0,0.96) 100%   /* Almost solid black at the bottom  */
+  );
+  z-index: 1;
+}
+
+/* Wrapper for all home content so it stacks above the overlays */
+.home-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* "Player:" label + text input row */
+.username-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.username-row label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 3px;
+  color: var(--grey);
+}
+
+/* Underline-only input — no box, just a bottom border */
+.username-row input {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 3px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid rgba(255,255,255,0.3);
+  color: #fff;
+  padding: 4px 8px;
+  width: 200px;
+  outline: none;
+  transition: border-color 0.2s;
+  cursor: none;
+}
+.username-row input::placeholder { color: rgba(255,255,255,0.2); }
+.username-row input:focus         { border-color: var(--red); }
+
+/* Validation error message below the input */
+#username-error {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--red);
+  text-transform: uppercase;
+  min-height: 18px; /* Reserve space so layout doesn't jump */
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Best-score banner (session only — no persistence) */
+#highscore-display {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--grey);
+  text-transform: uppercase;
+  margin-bottom: 34px;
+  min-height: 18px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+#highscore-display .hs-name  { color: #fff; }
+#highscore-display .hs-level { color: var(--red); }
+#highscore-display .hs-hints {
+  color: var(--grey);
+  font-size: 11px;
+  display: block;
+  margin-top: 2px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   9. MODE SELECT
+───────────────────────────────────────────────────────────────── */
+#screen-mode { background: #000; }
+
+.mode-subtitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--grey);
+  text-transform: uppercase;
+  margin-bottom: 48px;
+  position: relative;
+  z-index: 2;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   10. PvE GAME SCREEN
+───────────────────────────────────────────────────────────────── */
+#screen-game {
+  background: #000;
+  padding: 0;
+  overflow: hidden;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+/*
+  CSS keyframes: canvas shake on hit
+  Small random translates create an earthquake feel.
+  Applied by triggerShake() via canvas.classList.add('shaking').
+  Reference: CSS keyframe animations
+  https://developer.mozilla.org/en-US/docs/Web/CSS/@keyframes
+*/
+@keyframes shake {
+  0%   { transform: translate(0,   0);   }
+  15%  { transform: translate(-6px, 4px); }
+  30%  { transform: translate( 5px,-5px); }
+  45%  { transform: translate(-4px, 6px); }
+  60%  { transform: translate( 6px,-3px); }
+  75%  { transform: translate(-3px, 4px); }
+  90%  { transform: translate( 4px,-2px); }
+  100% { transform: translate(0,   0);   }
+}
+
+/* Full-viewport game canvas */
+#c {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: block;
+}
+/* Trigger the shake keyframe */
+#c.shaking { animation: shake 0.35s ease; }
+
+/* Top-right HUD panel */
+#game-hud {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  z-index: 10;
+  text-align: right;
+}
+
+/* Small muted "Math Att✦que — PvE" heading above the HUD numbers */
+#game-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 2px;
+}
+
+/* Level + shots counter */
+#hud {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 3px;
+  color: #fff;
+}
+
+/* Equation-form badge (e.g. "General Form") — red pill */
+#form-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #000;
+  background: var(--red);
+  padding: 3px 10px;
+  margin-top: 6px;
+  display: inline-block;
+}
+
+/* Container for modifier badges (walls / flipped / laser) */
+#modifier-badges {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+/* Individual modifier badge shared base */
+.mod-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 2px 8px;
+  display: inline-block;
+}
+.mod-badge.wall-badge  { background: rgba(255,165,0,0.25); color: orange; border: 1px solid orange; }
+.mod-badge.flip-badge  { background: rgba(0,200,255,0.15); color: #0cf;   border: 1px solid #0cf;  }
+.mod-badge.laser-badge { background: rgba(255,255,0,0.15);  color: yellow; border: 1px solid yellow; }
+
+/* Hint button — bottom-left, yellow pill */
+#hint-btn {
+  position: absolute;
+  top: 60px;
+  left: 28px;
+  z-index: 10;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: #000;
+  background: #ffe44d;
+  border: none;
+  padding: 5px 14px;
+  transition: opacity 0.2s, background 0.2s;
+  cursor: none;
+}
+#hint-btn:hover   { background: #ffd000; }
+#hint-btn.used    { opacity: 0.35; background: #666; color: #aaa; }
+
+/* Hint popup panel (shown by adding class "visible") */
+#hint-popup {
+  position: absolute;
+  top: 100px;
+  left: 28px;
+  z-index: 20;
+  background: rgba(0,0,0,0.9);
+  border: 1px solid #ffe44d;
+  padding: 14px 20px;
+  max-width: 340px;
+  display: none; /* Hidden by default */
+}
+#hint-popup.visible { display: block; }
+
+#hint-popup .hint-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: #ffe44d;
+  margin-bottom: 6px;
+}
+#hint-popup .hint-body {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #fff;
+  line-height: 1.6;
+  white-space: pre-line; /* Honour \n characters in hint strings */
+}
+#hint-popup .hint-close {
+  margin-top: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #ffe44d;
+  background: none;
+  border: 1px solid #ffe44d;
+  padding: 3px 12px;
+  cursor: none;
+}
+
+/*
+  Bottom control bar — rebuilt each level by renderControls() in game.js.
+  backdrop-filter:blur gives a frosted-glass effect.
+  Reference: CSS backdrop-filter
+  https://developer.mozilla.org/en-US/docs/Web/CSS/backdrop-filter
+*/
+#game-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%); /* Horizontal centre relative to viewport */
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.72);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 14px 20px;
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+
+/* Text labels inside the control bar */
+#game-controls .label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: #fff;
+}
+#game-controls .fixed {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.4); /* Muted = non-editable value shown for context */
+}
+
+/* Number inputs in the control bar */
+#game-controls input {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  width: 65px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 3px;
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s;
+  cursor: none;
+}
+#game-controls input:focus { border-color: var(--red); }
+
+/* Shoot / Fire / Cancel buttons inside control bar */
+#game-controls button {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 3px;
+  padding: 6px 20px;
+  cursor: none;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+  transition: background 0.2s, border-color 0.2s;
+}
+#game-controls button:hover          { background: var(--red);         border-color: var(--red); }
+#game-controls button.shoot-btn      { background: var(--red);         border-color: var(--red); }
+#game-controls button.shoot-btn:hover{ background: #ff3a3a; }
+#game-controls button.laser-btn      { background: rgba(255,220,0,0.12); border-color: gold; color: gold; }
+#game-controls button.laser-btn:hover{ background: rgba(255,220,0,0.28); }
+#game-controls button.laser-cancel-btn      { background: rgba(255,60,60,0.15); border-color: #f44; color: #f44; }
+#game-controls button.laser-cancel-btn:hover{ background: rgba(255,60,60,0.3); }
+
+/*
+  Mini dot-preview inside control bar:
+  Two coloured circles showing player (cyan) and enemy (red) positions.
+  Separated from the inputs by a right border.
+*/
+#dot-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-right: 4px;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  padding-right: 14px;
+}
+#dot-preview .dot-row  { display: flex; align-items: center; gap: 6px; }
+#dot-preview .dot      { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+#dot-preview .dot.player { background: #0cc; }
+#dot-preview .dot.enemy  { background: #e44; }
+#dot-preview .dot-label  {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.5);
+}
+
+/* Floating message (Hit! / Miss! / Wall!) — above the control bar */
+#msg {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: var(--red);
+  min-height: 28px;
+  white-space: nowrap;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   11. SANDBOX SCREEN
+   Uses a flex row layout:
+     #sb-sidebar     (fixed 310px width, scrollable)
+     #sb-canvas-wrap (flex:1, contains the canvas)
+───────────────────────────────────────────────────────────────── */
+#screen-sandbox {
+  background: #000;
+  padding: 0;
+  overflow: hidden;
+  align-items: stretch;
+  justify-content: stretch;
+  flex-direction: row; /* Override .screen default column */
+}
+
+/* ── Scrollable sidebar ───────────────────────────────────────── */
+#sb-sidebar {
+  width: 310px;
+  min-width: 310px;
+  height: 100%;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;   /* Sidebar scrolls independently of canvas */
+  overflow-x: hidden;
+  z-index: 10;
+}
+/* Thin custom scrollbar */
+#sb-sidebar::-webkit-scrollbar       { width: 4px; }
+#sb-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+/* Branding header at top of sidebar */
+.sb-header {
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0; /* Don't let it collapse */
+}
+
+.sb-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sb-logo .star { color: var(--red); }
+
+/* "SANDBOX" pill tag inside the logo row */
+.sb-logo .mode-tag {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--yellow);
+  background: rgba(255,228,77,0.12);
+  border: 1px solid rgba(255,228,77,0.3);
+  padding: 2px 7px;
+  margin-left: 4px;
+  align-self: center;
+}
+
+/* Generic sidebar section block */
+.sb-section {
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Section heading label (e.g. "POSITIONS") */
+.sb-section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--grey);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* 2-column grid for X/Y coordinate inputs */
+.coord-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.coord-group { display: flex; flex-direction: column; gap: 4px; }
+.coord-group label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--grey);
+}
+.coord-group input {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 2px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  padding: 6px 10px;
+  outline: none;
+  width: 100%;
+  text-align: center;
+  transition: border-color 0.2s;
+  cursor: none;
+}
+.coord-group input:focus { border-color: var(--cyan); }
+
+/* Toggle switch row (label + switch) */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.toggle-row span {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #ccc;
+}
+
+/*
+  CSS toggle switch (checkbox hidden, visual built from divs).
+  Pattern: hidden <input> + styled sibling divs.
+  Reference: CSS custom checkbox toggle
+  https://moderncss.dev/pure-css-custom-checkbox-style/
+*/
+.toggle {
+  position: relative;
+  width: 38px;
+  height: 20px;
+  cursor: none;
+}
+.toggle input { display: none; } /* Hide the real checkbox */
+
+/* The "track" (pill background) */
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  transition: background 0.2s, border-color 0.2s;
+}
+/* Track changes to cyan when checked */
+.toggle input:checked ~ .toggle-track {
+  background: rgba(0,204,204,0.3);
+  border-color: var(--cyan);
+}
+
+/* The "thumb" (circle that slides) */
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+/* Thumb slides right when checked */
+.toggle input:checked ~ .toggle-thumb {
+  transform: translateX(18px);
+  background: var(--cyan);
+}
+
+/* Form-type tab buttons (General / Factored / Vertex / Linear) */
+.form-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.form-tab {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  padding: 5px 12px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: var(--grey);
+  cursor: none;
+  transition: all 0.15s;
+}
+.form-tab:hover       { border-color: #fff; color: #fff; }
+.form-tab.active      { background: var(--cyan); border-color: var(--cyan); color: #000; }
+
+/* Container rebuilt by sbRenderEqInputs() */
+#eq-inputs { margin-top: 10px; }
+
+/* Equation input row: labels + number fields side by side */
+.eq-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.eq-row .eq-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: #fff;
+}
+.eq-row .eq-fixed {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.4); /* Greyed fixed value */
+}
+.eq-row input {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+  width: 64px;
+  padding: 4px 8px;
+  text-align: center;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+  cursor: none;
+}
+.eq-row input:focus { border-color: var(--cyan); }
+
+/* Live equation preview text below the inputs */
+#eq-preview {
+  margin-top: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--yellow);
+  min-height: 18px; /* Reserve space so layout doesn't jump */
+}
+
+/* Small note below equation inputs */
+.eq-note {
+  margin-top: 6px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--grey);
+}
+
+/* Sandbox action button row */
+.sb-btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+
+/* Sandbox button base */
+.sb-btn {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 3px;
+  padding: 7px 14px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  cursor: none;
+  transition: all 0.15s;
+  flex: 1;
+  text-align: center;
+}
+.sb-btn:hover         { background: rgba(255,255,255,0.14); border-color: #fff; }
+.sb-btn.primary       { background: var(--cyan);            border-color: var(--cyan); color: #000; }
+.sb-btn.primary:hover { background: #00eeee; }
+.sb-btn.danger        { background: rgba(224,32,32,0.2);   border-color: var(--red);  color: var(--red); }
+.sb-btn.danger:hover  { background: rgba(224,32,32,0.4); }
+.sb-btn.warn          { background: rgba(255,165,0,0.15);  border-color: orange; color: orange; }
+.sb-btn.warn:hover    { background: rgba(255,165,0,0.3); }
+
+/* Session stats block */
+#sb-shot-stats { padding: 14px 22px 10px; border-bottom: 1px solid var(--border); }
+.stat-row      { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.stat-label    { font-family: 'Bebas Neue', sans-serif; font-size: 11px; letter-spacing: 2px; color: var(--grey); }
+.stat-val      { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 2px; color: #fff; }
+.stat-val.hit  { color: #44ff88; }
+.stat-val.miss { color: var(--red); }
+
+/* Shot history log (scrollable) */
+#sb-shot-log-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 22px 16px;
+}
+#sb-shot-log-wrap::-webkit-scrollbar       { width: 3px; }
+#sb-shot-log-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+
+.log-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--grey);
+  margin-bottom: 8px;
+}
+
+/* Individual log entry row */
+.log-entry {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 5px 8px;
+  margin-bottom: 4px;
+  border-left: 2px solid transparent;
+  background: rgba(255,255,255,0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* Colour-coded left border by outcome */
+.log-entry.hit  { border-left-color: #44ff88; }
+.log-entry.miss { border-left-color: var(--red); }
+.log-entry.wall { border-left-color: orange; }
+
+.log-eq     { color: rgba(255,255,255,0.7); }
+.log-result { font-size: 11px; letter-spacing: 1px; }
+.log-result.hit  { color: #44ff88; }
+.log-result.miss { color: var(--red); }
+.log-result.wall { color: orange; }
+
+/* ── Canvas wrapper ────────────────────────────────────────────── */
+#sb-canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+/* Canvas fills its parent wrapper */
+#sb-c { display: block; width: 100%; height: 100%; }
+
+/* Top-right HUD on the canvas */
+#sb-hud-overlay  { position: absolute; top: 16px; right: 20px; z-index: 10; text-align: right; }
+#sb-hud-mode     { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 3px; color: rgba(255,255,255,0.35); }
+#sb-hud-info     { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: #fff; margin-top: 2px; }
+
+/* Floating message above the formula bar */
+#sb-msg {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 4px;
+  color: var(--yellow);
+  z-index: 10;
+  white-space: nowrap;
+  min-height: 26px;
+}
+
+/* Formula bar: shows last shot equation */
+#sb-formula-bar {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 10px 22px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: rgba(255,255,255,0.5);
+  z-index: 10;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+/* Cyan highlight for the equation value part */
+#sb-formula-bar span { color: var(--cyan); }
+
+/* Grid dimension reminder bottom-left */
+#sb-origin-badge {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 10;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.3);
+}
+
+/* Sandbox canvas shake (shorter than PvE version) */
+@keyframes sbshake {
+  0%   { transform: translate(0,   0); }
+  20%  { transform: translate(-5px, 4px); }
+  40%  { transform: translate( 4px,-4px); }
+  60%  { transform: translate(-4px, 5px); }
+  80%  { transform: translate( 5px,-3px); }
+  100% { transform: translate(0,   0); }
+}
+#sb-c.shaking { animation: sbshake 0.3s ease; }
