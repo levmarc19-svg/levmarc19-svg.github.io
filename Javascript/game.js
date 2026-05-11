@@ -862,7 +862,7 @@ function shoot() {
     var pos    = gridToPixel(worldX, worldY);
 
     // Out-of-bounds check
-    if (worldX > enemyX + 1 || worldY < 0) {
+    if (worldX > enemyX + 1 || worldY < -30) {
       trackerPos = null;
       finishShot(path, false, pos.px, pos.py, "oob", false);
       return;
