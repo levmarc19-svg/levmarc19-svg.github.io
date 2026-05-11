@@ -665,37 +665,45 @@ function updateModifierBadges() {
   Only shown while trackerPos is set (i.e. during a shot).
 */
 function drawTracker() {
-  if (!trackerPos || trackerPos.py >= 0) return;
-  var ax  = Math.max(30, Math.min(CANVAS_WIDTH - 30, trackerPos.px));
-  var ay  = 16, aw = 10, ah = 13;
+  if (!trackerPos) return;
 
-  // Vertical line below the arrow
-  ctx.save();
-  ctx.strokeStyle = "rgba(255,220,0,0.9)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(ax, ay + ah + 2);
-  ctx.lineTo(ax, ay + ah + 12);
-  ctx.stroke();
+  // Above screen
+  if (trackerPos.py < 0) {
+    var ax = Math.max(30, Math.min(CANVAS_WIDTH - 30, trackerPos.px));
+    var ay = 16, aw = 10, ah = 13;
+    // ... existing arrow drawing code (pointing DOWN) ...
+  }
 
-  // Arrow triangle (pointing down)
-  ctx.fillStyle = "rgba(255,220,0,0.9)";
-  ctx.beginPath();
-  ctx.moveTo(ax,      ay);
-  ctx.lineTo(ax - aw, ay + ah);
-  ctx.lineTo(ax + aw, ay + ah);
-  ctx.closePath();
-  ctx.fill();
+  // Below screen
+  if (trackerPos.py > CANVAS_HEIGHT) {
+    var ax = Math.max(30, Math.min(CANVAS_WIDTH - 30, trackerPos.px));
+    var ay = CANVAS_HEIGHT - 40; // near bottom edge
 
-  // Coordinate text
-  ctx.fillStyle = "rgba(255,220,0,0.85)";
-  ctx.font = "11px monospace";
-  ctx.textAlign = "center";
-  ctx.fillText("x=" + trackerPos.worldX.toFixed(1), ax, ay + ah + 24);
-  ctx.fillText("y=" + trackerPos.worldY.toFixed(1), ax, ay + ah + 36);
-  ctx.restore();
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,220,0,0.9)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay - 12);
+    ctx.lineTo(ax, ay - 2);
+    ctx.stroke();
+
+    // Arrow pointing UP (inverted triangle)
+    ctx.fillStyle = "rgba(255,220,0,0.9)";
+    ctx.beginPath();
+    ctx.moveTo(ax,       ay + 13); // tip pointing down
+    ctx.lineTo(ax - 10,  ay);
+    ctx.lineTo(ax + 10,  ay);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,220,0,0.85)";
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("x=" + trackerPos.worldX.toFixed(1), ax, ay + 28);
+    ctx.fillText("y=" + trackerPos.worldY.toFixed(1), ax, ay + 40);
+    ctx.restore();
+  }
 }
-
 /*
   draw()
   Main draw function — clears the canvas and redraws everything:
